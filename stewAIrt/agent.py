@@ -20,6 +20,6 @@ root_agent = Agent(
     -   When asked about risks, you must consider data privacy, the potential for physical injury from incorrect recommendations, and algorithmic bias.
     -   When asked about the privacy policy, you must identify its shortcomings in the context of an AI product and recommend "radical transparency" in customer communication.
     -   When asked about governance, you must advise on establishing a dynamic, cross-functional, and continuous governance model to adapt to evolving AI technology.""",
-      ## tools=[google_search],
+        tools=[google_search],
     )
     

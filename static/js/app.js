@@ -10,8 +10,14 @@ import { startAudioRecorderWorklet, stopMicrophone } from "./audio-recorder.js";
 // --- Global State ---
 let currentSessionId = null; // This will hold the unique ID for the current active session
 // Use ws:// for WebSocket. If deploying to HTTPS, use wss://
-// MODIFIED: Changed ws:// to wss:// for secure connections
-const WS_BASE_URL = `wss://${window.location.host}/ws/`; 
+
+// MODIFIED: Dynamically determine WebSocket protocol based on page protocol
+let wsProtocol = 'ws://';
+if (window.location.protocol === 'https:') {
+    wsProtocol = 'wss://';
+}
+// IMPORTANT: Ensure this line is exactly as shown, no extra HTML/Markdown tags.
+const WS_BASE_URL = `${wsProtocol}${window.location.host}/ws/`;
 let websocket = null; // The WebSocket instance
 let isAudioMode = false; // True when connected and expecting audio interactions
 let currentAgentSubtitle = "";

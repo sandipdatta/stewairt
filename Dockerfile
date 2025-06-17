@@ -14,7 +14,13 @@ RUN pip install --no-cache-dir -r requirements.txt
 # and the static/ directory (which contains your frontend JS/HTML files).
 COPY . .
 
+# --- IMPROVEMENT 1: Expose the port (good practice for clarity, though Cloud Run handles mapping) ---
+# Explicitly expose the port your application will listen on.
+# Uvicorn defaults to 8000, but Cloud Run provides a PORT environment variable.
+EXPOSE 8080
 
-# Command to run the application using Uvicorn in exec form.
-# Use a sub-shell for the --port argument to allow variable expansion.
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0"]
+# --- IMPROVEMENT 2: Dynamically set the port for Uvicorn using the Cloud Run PORT environment variable ---
+# Cloud Run injects the 'PORT' environment variable into the container.
+# Your application MUST listen on this specific port.
+# We use 'sh -c' to allow shell variable expansion of $PORT.
+CMD sh -c "uvicorn main:app --host 0.0.0.0 --port ${PORT}"
