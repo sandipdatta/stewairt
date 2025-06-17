@@ -1,6 +1,6 @@
 /**
  * app.js: Integrates the ADK streaming logic with the Purecode AI Avatar.
- * This version includes the fix for displaying subtitles in audio mode.
+ * This version uses WebSockets for real-time, bidirectional communication.
  */
 
 // Import audio worklet starters
@@ -9,10 +9,11 @@ import { startAudioRecorderWorklet, stopMicrophone } from "./audio-recorder.js";
 
 // --- Global State ---
 let currentSessionId = null; // This will hold the unique ID for the current active session
-const SSE_BASE_URL = `http://${window.location.host}/events/`; // Base URL for SSE
-const SEND_BASE_URL = `http://${window.location.host}/send/`; // Base URL for sending messages
-let eventSource = null;
-let isAudioMode = false; // This will be true only when connected and expecting audio interactions
+// Use ws:// for WebSocket. If deploying to HTTPS, use wss://
+// MODIFIED: Changed ws:// to wss:// for secure connections
+const WS_BASE_URL = `wss://${window.location.host}/ws/`; 
+let websocket = null; // The WebSocket instance
+let isAudioMode = false; // True when connected and expecting audio interactions
 let currentAgentSubtitle = "";
 let isNewAgentResponse = true; // Flag to track a new response from the agent.
 
@@ -29,7 +30,7 @@ let isConnected = false; // Overall connection state of the app
 const audioButton = document.getElementById("audioButton");
 const subtitle = document.getElementById("subtitle");
 
-// --- Avatar State Management ---
+// --- Avatar State Management --
 const avatarElements = {
     listeningRings: document.getElementById('listening-rings'),
     mouthIdle: document.getElementById('mouth-idle'),
@@ -66,33 +67,57 @@ window.onload = () => {
     audioButton.classList.remove('bg-red-600', 'hover:bg-red-500');
     audioButton.classList.add('bg-gray-600', 'hover:bg-gray-700');
     audioButton.addEventListener('click', handleAudioButtonClick);
-};
 
+    // Diagnostic: Add a console log to confirm window.onload and button listener setup
+    console.log("App initialized. Audio button listener attached.");
+};
 
 function showSubtitle(text) {
     subtitle.textContent = text;
     subtitle.classList.toggle('opacity-0', !text);
 }
 
-// --- SSE (Server-Sent Events) Handling ---
-function connectSSE() {
-    if (eventSource) eventSource.close(); // Close existing connection if any
+// --- WebSocket Handling ---
+function connectWebSocket() {
+    // Diagnostic: Log when connectWebSocket is actually called
+    console.log("Attempting to connect WebSocket...");
 
-    // Use the newly generated currentSessionId for the SSE URL
-    eventSource = new EventSource(`${SSE_BASE_URL}${currentSessionId}?is_audio=${isAudioMode}`);
+    // Generate a new session ID for each new connection
+    currentSessionId = Math.random().toString(36).substring(2, 12);
+    console.log("New session ID generated:", currentSessionId);
 
-    eventSource.onopen = () => {
-        console.log(`SSE connection opened for session ${currentSessionId}. Audio mode: ${isAudioMode}`);
+    // Determine the WebSocket URL based on audio mode
+    const wsUrl = `${WS_BASE_URL}${currentSessionId}?is_audio=${isAudioMode}`;
+
+    // Close any existing WebSocket connection before opening a new one
+    if (websocket) {
+        websocket.close();
+        websocket = null;
+    }
+
+    websocket = new WebSocket(wsUrl);
+
+    websocket.onopen = () => {
+        console.log(`WebSocket connection opened for session ${currentSessionId}. Audio mode: ${isAudioMode}`);
+        isConnected = true;
+        setAvatarState('listening'); // Go directly to listening once connected
+        showSubtitle("I am StewAIrt, your AI Innovation & Risk Strategist. How can I help?");
         isNewAgentResponse = true; // Reset for the welcome message
     };
 
-    eventSource.onmessage = handleServerMessage;
+    websocket.onmessage = handleServerMessage;
 
-    eventSource.onerror = () => {
-        console.error("SSE connection error or closed.");
-        // If an error occurs, and we were connected, try to reset to disconnected state.
-        if (isConnected) {
-            handleDisconnect(); // Treat error as an unplanned disconnect
+    websocket.onclose = () => {
+        console.log(`WebSocket connection closed for session ${currentSessionId}.`);
+        if (isConnected) { // Only attempt to reset UI if it was previously connected
+            handleDisconnect(); // Treat close as a disconnect
+        }
+    };
+
+    websocket.onerror = (error) => {
+        console.error("WebSocket error:", error);
+        if (isConnected) { // If an error occurs, ensure disconnect state
+            handleDisconnect();
         }
     };
 }
@@ -100,59 +125,56 @@ function connectSSE() {
 function handleServerMessage(event) {
     const message = JSON.parse(event.data);
     console.log("[AGENT TO CLIENT]", message);
-    if (isConnected) { // Only process if still connected
-        setAvatarState("speaking");
 
-        if (message.turn_complete) {
-            isNewAgentResponse = true; // Mark the end of a response.
-            setTimeout(() => {
-                showSubtitle("");
-                setAvatarState(isAudioMode ? "listening" : "idle"); // If in audio mode, go to listening, else idle
-            }, 2500);
-            return;
-        }
+    if (!isConnected) return; // Ignore messages if already disconnected
 
-        if (message.interrupted && audioPlayerNode) {
-            audioPlayerNode.port.postMessage({ command: "endOfAudio" });
+    setAvatarState("speaking");
+
+    if (message.turn_complete) {
+        isNewAgentResponse = true; // Mark the end of a response.
+        setTimeout(() => {
+            showSubtitle("");
             setAvatarState(isAudioMode ? "listening" : "idle"); // If in audio mode, go to listening, else idle
-            isNewAgentResponse = true; // Mark the end of an interrupted response.
-            return;
-        }
+        }, 2500);
+        return;
+    }
 
-        if (message.mime_type === "audio/pcm" && audioPlayerNode) {
-            audioPlayerNode.port.postMessage(base64ToArray(message.data));
-        }
+    if (message.interrupted && audioPlayerNode) {
+        audioPlayerNode.port.postMessage({ command: "endOfAudio" });
+        setAvatarState(isAudioMode ? "listening" : "idle"); // If in audio mode, go to listening, else idle
+        isNewAgentResponse = true; // Mark the end of an interrupted response.
+        return;
+    }
 
-        if (message.mime_type === "text/plain") {
-            // Check if this is the start of a new response and clear old text.
-            if (isNewAgentResponse) {
-                currentAgentSubtitle = "";
-                isNewAgentResponse = false;
-            }
-            currentAgentSubtitle += message.data;
-            showSubtitle(currentAgentSubtitle);
+    if (message.mime_type === "audio/pcm" && audioPlayerNode) {
+        audioPlayerNode.port.postMessage(base64ToArray(message.data));
+    }
+
+    if (message.mime_type === "text/plain") {
+        if (isNewAgentResponse) {
+            currentAgentSubtitle = "";
+            isNewAgentResponse = false;
         }
+        currentAgentSubtitle += message.data;
+        showSubtitle(currentAgentSubtitle);
     }
 }
 
 // --- User Interaction Handlers ---
 function handleAudioButtonClick() {
-    if (!isConnected) {
-        // CONNECT logic (restored)
-        currentSessionId = Math.random().toString(36).substring(2, 12); // Generate a new, unique session ID
-        console.log("New session ID generated:", currentSessionId);
+    // Diagnostic: Log when handleAudioButtonClick is called
+    console.log("Audio button clicked.");
 
-        isConnected = true;
-        isAudioMode = true; // Enable audio mode for SSE and audio streams
-        startAudio(); // Start audio player and recorder
-        connectSSE(); // Establish SSE connection using the new ID
+    if (!isConnected) {
+        // CONNECT
+        isAudioMode = true; // Always connect in audio mode for this app
+        connectWebSocket(); // Establish WebSocket connection
+        startAudio(); // Start audio player and recorder (will only activate mic once connected)
 
         audioButton.classList.remove('bg-gray-600', 'hover:bg-gray-700');
         audioButton.classList.add('bg-red-600', 'hover:bg-red-500'); // Change button to red
-        setAvatarState('listening'); // Go directly to listening once connected
-        showSubtitle("I am StewAIrt, your AI Innovation & Risk Strategist. How can I help?");
     } else {
-        // DISCONNECT logic (existing)
+        // DISCONNECT
         handleDisconnect();
     }
 }
@@ -161,9 +183,9 @@ function handleDisconnect() {
     isConnected = false;
     isAudioMode = false; // Disable audio mode
     stopAudio(); // Stop audio (microphone, player)
-    if (eventSource) {
-        eventSource.close(); // Close SSE connection
-        eventSource = null;
+    if (websocket) {
+        websocket.close(); // Explicitly close WebSocket
+        websocket = null;
     }
     currentSessionId = null; // Clear the session ID
     audioButton.classList.remove('bg-red-600', 'hover:bg-red-500');
@@ -173,24 +195,17 @@ function handleDisconnect() {
     console.log("Disconnected from StewAIrt.");
 }
 
-// --- Network Communication ---
-async function sendMessage(message) {
-    // Ensure we have a currentSessionId before attempting to send
-    if (!isConnected || !currentSessionId) {
-        console.warn("Attempted to send message while disconnected or no session ID.");
-        return;
-    }
-    try {
-        // Use the currentSessionId in the SEND URL
-        const response = await fetch(`${SEND_BASE_URL}${currentSessionId}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(message),
-        });
-        if (!response.ok) console.error('Failed to send message:', response.statusText);
-    } catch (error) {
-        console.error('Error sending message:', error);
-        handleDisconnect(); // If sending fails, assume disconnection
+// --- Network Communication (uses WebSocket now) ---
+function sendMessage(message) {
+    if (websocket && websocket.readyState === WebSocket.OPEN) {
+        websocket.send(JSON.stringify(message));
+    } else {
+        console.warn("WebSocket not open. Message not sent:", message);
+        // If websocket is not open, it implies a disconnection.
+        // It's good practice to ensure the UI reflects this.
+        if (isConnected) {
+            handleDisconnect();
+        }
     }
 }
 
@@ -232,7 +247,7 @@ function stopAudio() {
 }
 
 function audioRecorderHandler(pcmData) {
-    if (!isConnected) return; // Only buffer if connected
+    if (!isConnected) return; // Only buffer and send if connected
     audioBuffer.push(new Uint8Array(pcmData));
     if (!bufferTimer) {
         bufferTimer = setInterval(sendBufferedAudio, 200);
@@ -249,7 +264,7 @@ function sendBufferedAudio() {
     let offset = 0;
     for (const chunk of audioBuffer) combinedBuffer.set(chunk, offset), offset += chunk.length;
     
-    // Use currentSessionId for sending audio data
+    // Use WebSocket to send audio data
     sendMessage({ mime_type: "audio/pcm", data: arrayBufferToBase64(combinedBuffer.buffer) });
     console.log(`[CLIENT TO AGENT] Sent ${combinedBuffer.byteLength} audio bytes.`);
     audioBuffer = [];
