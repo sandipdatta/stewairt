@@ -25,6 +25,15 @@ Before you begin, ensure you have the following installed and configured:
 
 3.  **Google Cloud Project:** Ensure you have an active Google Cloud Project with the **Cloud Run API** and **Artifact Registry API** enabled.
 
+4.  **API Key Configuration (`.env`):**
+    * Your application uses a `GEMINI_API_KEY` (or similar Google API credentials) to interact with the AI models. This key **must not** be committed to your public Git repository.
+    * Create a file named `.env` in the root directory of your project (the same directory as `main.py` and `Dockerfile`).
+    * Add your API key to this file in the following format:
+        ```
+        GEMINI_API_KEY="YOUR_ACTUAL_GEMINI_API_KEY_HERE"
+        ```
+    * Ensure `.env` is included in your `.gitignore` file to prevent accidental commits.
+
 ### Deployment Steps
 
 1.  **Create an Artifact Registry Repository:**
@@ -55,8 +64,7 @@ Before you begin, ensure you have the following installed and configured:
     docker build -t us-central1-docker.pkg.dev/[YOUR_PROJECT_ID]/stewairt/stewairt-app:latest .
     ```
 
-    * Replace `[YOUR_PROJECT_ID]` with your actual Google Cloud Project ID.
-    * `stewairt` in the path should match the name of the repository you created.
+    * **Important:** Replace `[YOUR_PROJECT_ID]` with your actual Google Cloud Project ID in this command and the following ones.
 
 4.  **Push the Docker Image to Artifact Registry:**
     Upload your built Docker image to Artifact Registry.
