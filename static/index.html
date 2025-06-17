@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI in the Boardroom - StewAIrt</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+        }
+        .bg-animated {
+            background: linear-gradient(-45deg, #111827, #1f2937, #374151);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+        }
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        #subtitle {
+            text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+        }
+        /* Styles from Purecode AI Avatar */
+        @keyframes pulse-glow {
+            0%, 100% { opacity: 0.6; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.05); }
+        }
+        @keyframes voice-wave {
+            0%, 100% { transform: scaleY(0.3); }
+            50% { transform: scaleY(1); }
+        }
+        @keyframes thinking-dots {
+            0%, 20% { opacity: 0; }
+            50% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+        @keyframes breathing {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+        @keyframes listening-ring {
+            0% { transform: scale(1); opacity: 0.8; }
+            100% { transform: scale(1.4); opacity: 0; }
+        }
+        .pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
+        .voice-wave { animation: voice-wave 0.3s ease-in-out infinite; }
+        .thinking-dots { animation: thinking-dots 1.5s ease-in-out infinite; }
+        .breathing { animation: breathing 4s ease-in-out infinite; }
+        .listening-ring { animation: listening-ring 2s ease-out infinite; }
+        .voice-wave:nth-child(2) { animation-delay: 0.1s; }
+        .voice-wave:nth-child(3) { animation-delay: 0.2s; }
+        .voice-wave:nth-child(4) { animation-delay: 0.3s; }
+        .voice-wave:nth-child(5) { animation-delay: 0.4s; }
+        .thinking-dots:nth-child(2) { animation-delay: 0.3s; }
+        .thinking-dots:nth-child(3) { animation-delay: 0.6s; }
+    </style>
+</head>
+<body class="bg-animated text-gray-200">
+
+    <div class="relative w-full h-screen flex flex-col items-center justify-center p-8">
+        <header class="absolute top-0 w-full p-8 text-center">
+            <h1 class="text-2xl font-bold text-white">AI in the Boardroom</h1>
+            <p class="text-sm text-blue-400">Wellness Wizs | Project Gym MAIte</p>
+        </header>
+
+        <div class="flex flex-col items-center space-y-8 mb-24">
+            <div id="avatar-container" class="relative">
+                <div id="listening-rings" class="absolute inset-0 hidden">
+                    <div class="absolute inset-0 border-4 border-blue-400 rounded-full listening-ring"></div>
+                    <div class="absolute inset-0 border-4 border-blue-300 rounded-full listening-ring" style="animation-delay: 0.5s;"></div>
+                </div>
+                <div id="main-avatar" class="relative w-48 h-48 breathing">
+                    <svg viewBox="0 0 200 200" class="w-full h-full">
+                        <circle cx="100" cy="100" r="95" fill="url(#avatarGradient)" stroke="url(#borderGradient)" stroke-width="3"/>
+                        <g opacity="0.3">
+                            <path d="M50 50 L150 50 L150 80 L120 80 L120 120 L150 120 L150 150" stroke="#60A5FA" stroke-width="2" fill="none"/>
+                            <path d="M150 50 L150 20 L120 20 L120 50" stroke="#34D399" stroke-width="2" fill="none"/>
+                            <circle cx="50" cy="50" r="3" fill="#60A5FA"/>
+                            <circle cx="150" cy="150" r="3" fill="#34D399"/>
+                            <circle cx="120" cy="80" r="2" fill="#F59E0B"/>
+                        </g>
+                        <circle cx="100" cy="100" r="70" fill="url(#faceGradient)"/>
+                        <g id="eyes">
+                            <ellipse cx="85" cy="85" rx="8" ry="12" fill="#60A5FA" class="pulse-glow"/>
+                            <ellipse cx="115" cy="85" rx="8" ry="12" fill="#60A5FA" class="pulse-glow"/>
+                            <circle cx="85" cy="85" r="3" fill="#FFFFFF"/>
+                            <circle cx="115" cy="85" r="3" fill="#FFFFFF"/>
+                        </g>
+                        <g id="mouth-idle">
+                            <ellipse cx="100" cy="120" rx="15" ry="8" fill="#374151" opacity="0.8"/>
+                        </g>
+                        <g id="voice-waves" class="hidden">
+                            <rect x="85" y="115" width="3" height="10" fill="#60A5FA" class="voice-wave"/>
+                            <rect x="90" y="110" width="3" height="20" fill="#34D399" class="voice-wave"/>
+                            <rect x="95" y="105" width="3" height="30" fill="#F59E0B" class="voice-wave"/>
+                            <rect x="100" y="100" width="3" height="40" fill="#EF4444" class="voice-wave"/>
+                            <rect x="105" y="105" width="3" height="30" fill="#F59E0B" class="voice-wave"/>
+                            <rect x="110" y="110" width="3" height="20" fill="#34D399" class="voice-wave"/>
+                            <rect x="115" y="115" width="3" height="10" fill="#60A5FA" class="voice-wave"/>
+                        </g>
+                        <g id="thinking-dots" class="hidden">
+                            <circle cx="90" cy="120" r="3" fill="#60A5FA" class="thinking-dots"/>
+                            <circle cx="100" cy="120" r="3" fill="#34D399" class="thinking-dots"/>
+                            <circle cx="110" cy="120" r="3" fill="#F59E0B" class="thinking-dots"/>
+                        </g>
+                        <defs>
+                            <linearGradient id="avatarGradient" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#1E293B"/><stop offset="100%" style="stop-color:#0F172A"/></linearGradient>
+                            <linearGradient id="borderGradient" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#60A5FA"/><stop offset="50%" style="stop-color:#34D399"/><stop offset="100%" style="stop-color:#F59E0B"/></linearGradient>
+                            <radialGradient id="faceGradient" cx="50%" cy="40%"><stop offset="0%" style="stop-color:#374151"/><stop offset="100%" style="stop-color:#1F2937"/></radialGradient>
+                        </defs>
+                    </svg>
+                </div>
+            </div>
+            <div id="status-indicator" class="text-center">
+                <div id="status-text" class="text-xl font-semibold text-white mb-2">StewAIrt</div>
+                <div id="status-subtitle" class="text-sm text-gray-400">AI Innovation Strategist</div>
+            </div>
+        </div>
+
+        <div class="absolute bottom-40 w-full max-w-4xl text-center px-8">
+             <p id="subtitle" class="text-2xl font-medium text-white h-24 transition-opacity duration-300 opacity-0"></p>
+        </div>
+
+
+        <div class="absolute bottom-0 left-0 w-full p-8 bg-black/20 backdrop-blur-sm">
+            <form id="messageForm" class="max-w-4xl mx-auto flex items-center justify-center gap-4">
+                <button type="button" id="audioButton" class="bg-gray-600 hover:bg-gray-700 text-white p-3 rounded-full transition-all duration-300 shadow-md focus:outline-none ring-offset-2 ring-offset-gray-800 focus:ring-2 focus:ring-blue-500">
+                    <svg id="mic-icon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script src="/static/js/app.js" type="module"></script>
+</body>
+</html>

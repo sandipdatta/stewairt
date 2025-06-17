@@ -1,0 +1,59 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+build/
+develop-eggs/
+dist/
+eggs/
+.eggs/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Byte-code files
+*.pyc
+*.bin
+
+# C extensions
+*.so
+
+# MyPy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# pytest
+.pytest_cache/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IDEs and editors
+.idea/
+.vscode/
+*.swp
+*.bak
+*.tmp
+*~
+.DS_Store  # macOS specific
+
+# Environment variables
+.env
+.flaskenv
+
+# Docker
+# Dockerignore itself should be committed, but generated files like build outputs
+# or transient data should be ignored.
+# For example, if you had a .dockerbuild/ directory for temporary build files:
+# .dockerbuild/
+
+# Logs and databases
+*.log
+*.sqlite3
+*.db
