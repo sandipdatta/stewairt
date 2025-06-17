@@ -8,6 +8,11 @@ StewAIrt, an AI Innovation & Risk Strategist, acts as a virtual board member, pr
 
 This project uses FastAPI for the backend, serving a static HTML/JavaScript frontend, and leverages WebSockets for real-time, bidirectional communication with a conversational AI agent powered by the Google ADK (Agent Development Kit). Audio input and output are handled via Web Audio API Worklets for a seamless voice-enabled interaction.
 
+To give you an idea of the app's appearance:
+
+<img src="static/stewairt.png" alt="StewAIrt App Screenshot" width="50%" />
+
+
 ## Deployment to Google Cloud Run
 
 Follow these steps to deploy the "AI in the Boardroom - StewAIrt" application to Google Cloud Run.
@@ -25,13 +30,16 @@ Before you begin, ensure you have the following installed and configured:
 
 3.  **Google Cloud Project:** Ensure you have an active Google Cloud Project with the **Cloud Run API** and **Artifact Registry API** enabled.
 
-4.  **API Key Configuration (`.env`):**
-    * Your application uses a `GEMINI_API_KEY` (or similar Google API credentials) to interact with the AI models. This key **must not** be committed to your public Git repository.
+4.  **Vertex AI Configuration (`.env`):**
+    * Your application uses Vertex AI for its AI models. Your Google Cloud Project ID and desired location are needed for this configuration. These values **must not** be committed to your public Git repository.
     * Create a file named `.env` in the root directory of your project (the same directory as `main.py` and `Dockerfile`).
-    * Add your API key to this file in the following format:
+    * Add your Vertex AI configuration to this file in the following format:
         ```
-        GEMINI_API_KEY="YOUR_ACTUAL_GEMINI_API_KEY_HERE"
+        GOOGLE_GENAI_USE_VERTEXAI=TRUE
+        GOOGLE_CLOUD_PROJECT="your-google-cloud-project-id"
+        GOOGLE_CLOUD_LOCATION="your-google-cloud-region"
         ```
+    * **Important:** Replace `"your-google-cloud-project-id"` with your actual Google Cloud Project ID and `"your-google-cloud-region"` (e.g., `us-central1`) with the region where you plan to use Vertex AI models.
     * Ensure `.env` is included in your `.gitignore` file to prevent accidental commits.
 
 ### Deployment Steps
